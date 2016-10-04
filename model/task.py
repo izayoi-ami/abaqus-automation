@@ -56,4 +56,5 @@ class Task:
         self.nextJob = self.nextJob + 1
 
     def executeJob(self, index):
-        self.jobs[index].execute(self.ts)
+        ts = int(time.time())
+        self.jobs[index].execute(ts)
