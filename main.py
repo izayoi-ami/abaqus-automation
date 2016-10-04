@@ -32,7 +32,7 @@ class Root(FloatLayout):
     list_jobs = ObjectProperty(None)
     lbl_progress = ObjectProperty(None)
     btn_execute = ObjectProperty(None)
-    taskfile = ObjectProperty(None)
+    taskfile = "default.job"
     task = Task()
 
     def task_args_converter(self, index, rec):
@@ -90,7 +90,7 @@ class Root(FloatLayout):
         self.task.removeJobs(ys)
         self.update_list()
 
-    def reset_jobs(self,xs):
+    def reset_jobs(self, xs):
         ys = [len(self.task.jobs) - k - 1 for k in xs]
         self.task.cleanState(ys)
         self.update_list()
