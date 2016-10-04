@@ -7,6 +7,7 @@ from kivy.uix.listview import ListItemButton
 from kivy.adapters.listadapter import ListAdapter
 from pathlib import Path
 from model.task import Task
+import time
 
 
 class LoadDialog(FloatLayout):
@@ -103,6 +104,7 @@ class Root(FloatLayout):
             self.task.executeNextJob()
             self.task.save(self.taskfile)
             self.update_list()
+            time.sleep(5)
         self.set_msg("Simulation Done.")
         self.btn_execute.disabled = False
         self.update_list()
