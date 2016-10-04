@@ -36,7 +36,7 @@ class Root(FloatLayout):
     task = Task()
 
     def task_args_converter(self, index, rec):
-        return {"text": rec.name(),
+        return {"text": rec.list_name(),
                 "height": 25,
                 }
 
