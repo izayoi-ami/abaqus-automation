@@ -1,5 +1,6 @@
 import pickle
 import time
+from model.job import Job
 
 
 class Task:
@@ -16,6 +17,11 @@ class Task:
         with open(filename, "rb") as f:
             self.jobs = pickle.load(f)
 
+    def generateJob(self, js, fs):
+        for j in js:
+            for f in fs:
+                self.addJob(Job(j, f))
+
     def addJob(self, job):
         self.jobs.append(job)
 
@@ -24,7 +30,7 @@ class Task:
 
     def removeJobs(self, xs):
         ks = range(len(self.jobs))
-        js = [v for k, v in zip(self.jobs, ks) if k not in xs]
+        js = [v for k, v in zip(ks, self.jobs) if k not in xs]
         self.jobs = js
 
     def clearTask(self):
@@ -35,9 +41,17 @@ class Task:
         for k in xs:
             self.jobs[k].reset()
 
+    def hasExecutableJob(self):
+        return self.nextJob < len(self.jobs)
+
+    def getNextExecuteJob(self):
+        if not self.hasExecutableJob():
+            return None
+        return self.jobs[self.nextJob]
+
     def executeNextJob(self):
-        if self.nextJob >= len(self.jobs):
-            return True
+        if not self.hasExecutableJob():
+            return
         self.executeJob(self.nextJob)
         self.nextJob = self.nextJob + 1
 

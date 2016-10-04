@@ -1,40 +1,87 @@
 #:kivy 1.1.0
+#:import ListAdapter kivy.adapters.listadapter.ListAdapter
+#:import ListItemButton kivy.uix.listview
+#:import Factory kivy.factory.Factory
 
 Root:
-
+    list_jobs: list_jobs
+    btn_execute: btn_execute
+    lbl_progress: lbl_progress
     BoxLayout:
         orientation: 'vertical'
         BoxLayout:
             size_hint_y: None
             height: 30
             Button:
-                text: 'Load Simulation'
+                text: 'Load Task'
                 on_release: root.show_load()
             Button:
-                text: 'Save Simulation'
+                text: 'Save Task'
                 on_release: root.show_save()
 
             Button:
-                text: 'Generate Simulation'
-                on_release: root.show_generate()
+                text: 'Add Jobs'
+                on_release: root.show_add()
 
         ListView:
             id: list_jobs
-
+            
         BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Remove selected jobs"
+                on_release: root.remove_jobs([int(k.pos[1])//25 for k in list_jobs.adapter.selection])
+
+            Button:
+                text: "Reset selected jobs state"
+                on_release: root.reset_jobs([int(k.pos[1])//25 for k in list_jobs.adapter.selection])
+
             Button:
                 id: btn_execute
-                text: 'Execute'
+                text: 'Execute task'
+                on_release: root.execute()
 
-<GenerateDialog>:
+        Label:
+            id: lbl_progress
+            size_hint_y: None
+            height:30
+            text: "[b]Status[/b]:[color=ff3333] Not running [/color]"
+            markup: True
+
+<JobDialog>:
     BoxLayout:
         size: root.size
         pos: root.pos
         orientation: "vertical"
-        FileChooserIconView:
-            id: filechooser
-            path: "./"
-            multiselect: True
+        BoxLayout:
+            orientation: "horizontal"
+
+            BoxLayout:
+                orientation: "vertical"
+
+                Label: 
+                    size_hint: (1, 0.05)
+                    text: "Choose Job Files..."
+
+                FileChooserIconView:
+                    id: jobchooser
+                    path: "./"
+                    filters: ["*.inp"]
+                    multiselect: True
+
+            BoxLayout:
+                orientation: "vertical"
+
+                Label: 
+                    size_hint: (1, 0.05)
+                    text: "Choose Fortran Files..."
+
+                FileChooserIconView:
+                    id: fortranchooser
+                    path: "./"
+                    filters: ["*.f"]
+                    multiselect: True
 
         BoxLayout:
             size_hint_y: None
@@ -45,7 +92,7 @@ Root:
 
             Button:
                 text: "Load"
-                on_release: root.load(filechooser.path, filechooser.selection)
+                on_release: root.add(jobchooser.selection, fortranchooser.selection)
 <LoadDialog>:
     BoxLayout:
         size: root.size
@@ -54,7 +101,7 @@ Root:
         FileChooserIconView:
             id: filechooser
             path: "./"
-            multiselect: True
+            filters: ["*.job"]
 
         BoxLayout:
             size_hint_y: None
@@ -65,7 +112,7 @@ Root:
 
             Button:
                 text: "Load"
-                on_release: root.load(filechooser.path, filechooser.selection)
+                on_release: root.load(filechooser.path, filechooser.selection[0])
 
 <SaveDialog>:
     text_input: text_input
@@ -75,10 +122,13 @@ Root:
         orientation: "vertical"
         FileChooserListView:
             id: filechooser
+            path: "./"
+            filters: ["*.job"]
             on_selection: text_input.text = self.selection and self.selection[0] or ''
 
         TextInput:
             id: text_input
+            text: "default.job"
             size_hint_y: None
             height: 30
             multiline: False
