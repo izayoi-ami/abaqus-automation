@@ -127,7 +127,7 @@ class Root(FloatLayout):
         if k > -1:
             self.task.update_status()
             self.update_list()
-            if not self.task.jobs[k].executed:
+            if self.task.jobs[k].running:
                 return
         job = self.task.getNextExecutor()
         if job is not None:
