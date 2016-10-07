@@ -5,9 +5,11 @@ from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.listview import ListItemButton
 from kivy.adapters.listadapter import ListAdapter
+from kivy.clock import Clock
 from pathlib import Path
 from model.task import Task
-import time
+import asyncio
+import sys
 
 
 class LoadDialog(FloatLayout):
@@ -35,6 +37,7 @@ class Root(FloatLayout):
     btn_execute = ObjectProperty(None)
     taskfile = "default.job"
     task = Task()
+    loop = None
 
     def task_args_converter(self, index, rec):
         return {"text": rec.list_name(),
@@ -104,10 +107,45 @@ class Root(FloatLayout):
             self.task.executeNextJob()
             self.task.save(self.taskfile)
             self.update_list()
-            time.sleep(5)
         self.set_msg("Simulation Done.")
         self.btn_execute.disabled = False
         self.update_list()
+
+    def start_execution(self):
+        if not self.task.hasExecutableJob():
+            return
+        self.loop = asyncio.get_event_loop()
+        if sys.platform == 'win32':
+            self.loop = asyncio.ProactorEventLoop()
+            asyncio.set_event_loop(self.loop)
+        self.btn_execute.disabled = True
+        self.loop.run_forever()
+        Clock.schedule_interval(lambda dt: self.update_queue(), 60)
+
+    def update_queue(self):
+        k = self.task.current_job()
+        if k > -1:
+            self.task.update_status()
+            self.update_list()
+            if not self.task.jobs[k].executed:
+                return
+        job = self.task.getNextExecutor()
+        if job is not None:
+            self.loop.call_soon(job)
+            return
+        self.set_msg("Simulation Done.")
+        self.btn_execute.disabled = False
+        self.loop.stop()
+        self.loop.close()
+        self.update_list()
+
+    def stop_execution(self):
+        if self.loop is not None:
+            self.loop.stop()
+
+    def resume_execution(self):
+        if self.loop is not None:
+            self.loop.run_forever()
 
     def set_state(self, state):
         text = "[b]Status[/b]:{}".format(state)

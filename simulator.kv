@@ -39,8 +39,17 @@ Root:
 
             Button:
                 id: btn_execute
-                text: 'Execute task'
+                text: 'Start simulation'
                 on_release: root.execute()
+
+            Button:
+                text: 'Stop simulation'
+                on_release: root.stop_execution()
+
+            Button:
+                text: "Resume simulation"
+                on_release: root.resume_execution()
+                
 
         Label:
             id: lbl_progress

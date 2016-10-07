@@ -49,6 +49,22 @@ class Task:
             return None
         return self.jobs[self.nextJob]
 
+    def current_job(self):
+        if self.hasExecutableJob():
+            return self.nextJob - 1
+        return -1
+
+    def getExecutor(self, index):
+        ts = int(time.time())
+        return self.jobs[index].execute(ts)
+
+    def getNextExecutor(self):
+        if not self.hasExecutableJob():
+            return None
+        job = self.executeJob(self.nextJob)
+        self.nextJob = self.nextJob + 1
+        return job
+
     def executeNextJob(self):
         if not self.hasExecutableJob():
             return
@@ -58,3 +74,7 @@ class Task:
     def executeJob(self, index):
         ts = int(time.time())
         self.jobs[index].execute(ts)
+
+    def update_status(self):
+        for j in self.jobs:
+            j.update_status()
