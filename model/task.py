@@ -1,6 +1,7 @@
 import pickle
 import time
 from model.job import Job
+from functools import partial
 
 
 class Task:
@@ -56,12 +57,12 @@ class Task:
 
     def getExecutor(self, index):
         ts = int(time.time())
-        return self.jobs[index].execute(ts)
+        return partial(self.jobs[index].execute, ts)
 
     def getNextExecutor(self):
         if not self.hasExecutableJob():
             return None
-        job = self.executeJob(self.nextJob)
+        job = self.getExecutor(self.nextJob)
         self.nextJob = self.nextJob + 1
         return job
 

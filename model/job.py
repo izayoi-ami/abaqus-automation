@@ -48,7 +48,7 @@ class Job:
     def name(self):
         return "{}-{}".format(self.jobName, self.ts)
 
-    async def execute(self, ts, outdir="./output"):
+    def execute(self, ts, outdir="./output"):
         if self.executed:
             return True
         self.ts = ts
