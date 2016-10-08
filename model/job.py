@@ -35,12 +35,12 @@ class Job:
         self.executed = self.p.poll() is not None
         try:
             with open("{}.sta".format(self.name())) as f:
-                line = tailer.tail(f, 1)
+                line, _ = tailer.tail(f, 1)
             if line.find("NOT") == -1:
                 if line.find("COMPLETE") == 1:
                     self.state = "Succeed"
                 else:
-                    self.state = "Running"
+                    self.state = line
             else:
                 self.state = "Fail"
         except FileNotFoundError:
