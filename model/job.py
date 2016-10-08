@@ -17,7 +17,6 @@ class Job:
                                       Path(fortranFile).stem)
         self.cpus = cpus
         self.executed = executed
-        self.running = False
         self.state = state
         self.ts = 0
         self.p = None
@@ -25,7 +24,7 @@ class Job:
         self.tmp_fortranFile = ""
 
     def status(self):
-        if self.executed or self.running:
+        if self.executed or self.running():
             return self.state
         return "Not yet executed."
 
@@ -117,9 +116,15 @@ class Job:
 
     def reset(self):
         self.executed = False
-        self.running = False
         self.p = None
         self.success = ""
+
+    def running(self):
+        if self.p is None:
+            return False
+        if self.p.poll() is None:
+            return True
+        return False
 
     def list_name(self):
         jobFile = Path(self.jobFile).name
