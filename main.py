@@ -124,7 +124,7 @@ class Root(FloatLayout):
         self.task.jobs[k].update_status()
         # self.task.update_status()
         self.update_list()
-        state = self.tasks.jobs[k].p.poll()
+        state = self.task.jobs[k].p.poll()
         print("Debug:", state)
         if state is not None:
             return
