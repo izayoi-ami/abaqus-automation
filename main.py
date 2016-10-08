@@ -125,10 +125,10 @@ class Root(FloatLayout):
         # self.task.update_status()
         self.update_list()
         state = self.task.jobs[k].p.poll()
-        print("Debug:", state)
+        # print("Debug:", state)
         if state is None:
             return
-        print("Job exited status: {}".format(state))
+        # print("Job exited status: {}".format(state))
         if self.task.executeNextJob() is not None:
             job = self.task.jobs[k+1]
             self.set_state("Running job: {}".format(job.formatted_name()))
