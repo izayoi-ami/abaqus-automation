@@ -68,7 +68,7 @@ class Task:
 
     def executeNextJob(self):
         if not self.hasExecutableJob():
-            return
+            return None
         self.executeJob(self.nextJob)
         self.nextJob = self.nextJob + 1
 

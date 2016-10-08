@@ -8,8 +8,6 @@ from kivy.adapters.listadapter import ListAdapter
 from kivy.clock import Clock
 from pathlib import Path
 from model.task import Task
-import asyncio
-import sys
 
 
 class LoadDialog(FloatLayout):
@@ -36,8 +34,8 @@ class Root(FloatLayout):
     lbl_progress = ObjectProperty(None)
     btn_execute = ObjectProperty(None)
     taskfile = "default.job"
+    checker = ObjectProperty(None)
     task = Task()
-    loop = None
 
     def task_args_converter(self, index, rec):
         return {"text": rec.list_name(),
@@ -114,38 +112,35 @@ class Root(FloatLayout):
     def start_execution(self):
         if not self.task.hasExecutableJob():
             return
-        self.loop = asyncio.get_event_loop()
-        if sys.platform == 'win32':
-            self.loop = asyncio.ProactorEventLoop()
-            asyncio.set_event_loop(self.loop)
         self.btn_execute.disabled = True
-        self.loop.run_forever()
-        Clock.schedule_interval(lambda dt: self.update_queue(), 60)
+        self.set_state("Running job: {}".format(self.task.getNextExecuteJob().formatted_name()))
+        self.task.executeNextJob()
+        self.checker = Clock.schedule_interval(lambda dt: self.update_queue(), 60)
 
     def update_queue(self):
         k = self.task.current_job()
-        if k > -1:
-            self.task.update_status()
-            self.update_list()
-            if self.task.jobs[k].running:
-                return
-        job = self.task.getNextExecutor()
-        if job is not None:
-            self.loop.call_soon(job)
+        if k == -1:
             return
+        self.task.update_status()
+        self.update_list()
+        if self.task.jobs[k].p is not None:
+            return
+        if self.task.executeNextJob() is not None:
+            job = self.task.jobs[k+1]
+            self.set_state("Running job: {}".format(job.formatted_name()))
+            return
+        self.checker.cancel()
+        self.checker = None
         self.set_msg("Simulation Done.")
         self.btn_execute.disabled = False
-        self.loop.stop()
-        self.loop.close()
-        self.update_list()
 
     def stop_execution(self):
-        if self.loop is not None:
-            self.loop.stop()
+        if self.checker is not None:
+            self.checker.cancel()
 
     def resume_execution(self):
-        if self.loop is not None:
-            self.loop.run_forever()
+        if self.chcker is None:
+            self.checker = Clock.schedule_interval(lambda dt: self.update_queue(), 60)
 
     def set_state(self, state):
         text = "[b]Status[/b]:{}".format(state)

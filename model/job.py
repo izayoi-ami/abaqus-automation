@@ -20,6 +20,9 @@ class Job:
         self.running = False
         self.state = state
         self.ts = 0
+        self.p = None
+        self.tmp_jobFile = ""
+        self.tmp_fortranFile = ""
 
     def status(self):
         if self.executed or self.running:
@@ -27,13 +30,12 @@ class Job:
         return "Not yet executed."
 
     def update_status(self):
-        if self.executed:
+        if self.executed or self.p is None:
             return
-        if not self.running:
-            return
+        self.executed = self.p.poll() is not None
         try:
             with open("{}.sta".format(self.name())) as f:
-                line = tailer.fail(f, 1)
+                line = tailer.tail(f, 1)
             if line.find("NOT") == -1:
                 if line.find("COMPLETE") == 1:
                     self.state = "Succeed"
@@ -43,7 +45,33 @@ class Job:
                 self.state = "Fail"
         except FileNotFoundError:
             self.state = "STA file not found"
-        return self.state
+        if self.executed:
+            self.clean_dir()
+
+    def clean_dir(self):
+        name = self.name()
+        fortranFile = self.tmp_fortranFile
+        outdir = "./output"
+        config = {
+            "result": ["dat", "inp", "odb", "sta"],
+            "log": ["msg"],
+            "del": ["prt", "com", "sim"]
+        }
+
+        for k in config:
+            os.makedirs(str(Path(outdir, k)), exist_ok=True)
+            for f in config[k]:
+                fname = "{}.{}".format(name, f)
+                try:
+                    shutil.move(fname, str(Path(outdir, k, fname)))
+                except:
+                    pass
+        try:
+            outpath = Path(outdir, "result", fortranFile)
+            shutil.move(fortranFile, str(outpath))
+        except:
+            pass
+        shutil.rmtree(str(Path(outdir, "del")), ignore_errors=True)
 
     def name(self):
         return "{}-{}".format(self.jobName, self.ts)
@@ -52,7 +80,6 @@ class Job:
         if self.executed:
             return True
         self.ts = ts
-        name = self.name()
         jobFile = self.prepareJobTempFile()
         fortranFile = self.prepareFortranTmpFile()
 
@@ -61,51 +88,21 @@ class Job:
             .format(prog, jobFile, fortranFile, self.cpus)
 
         try:
-            self.running = True
             self.state = "Starting ..."
-            subprocess.run(cmd)
-            self.executed = True
-            self.running = False
-            with open("{}.sta".format(name)) as f:
-                line = tailer.tail(f, 1)
-            if line.find("NOT") == -1:
-                self.state = "Completed"
-            else:
-                self.state = "Not completed"
+            self.p = subprocess.popen(cmd)
         except subprocess.SubprocessError:
             print("Processing Error")
             self.state = "Process Error"
         except FileNotFoundError:
             print("File/Command not found")
             self.state = "File not found"
-        finally:
-            config = {
-                "result": ["dat", "inp", "odb", "sta"],
-                "log": ["msg"],
-                "del": ["prt", "com", "sim"]
-            }
-
-            for k in config:
-                os.makedirs(str(Path(outdir, k)), exist_ok=True)
-                for f in config[k]:
-                    fname = "{}.{}".format(name, f)
-                    try:
-                        shutil.move(fname, str(Path(outdir, k, fname)))
-                    except:
-                        pass
-            try:
-                outpath = Path(outdir, "result", fortranFile)
-                shutil.move(fortranFile, str(outpath))
-            except:
-                pass
-
-            shutil.rmtree(str(Path(outdir, "del")), ignore_errors=True)
 
         return self.state
 
     def prepareJobTempFile(self):
         tmp_jobFile = "{}{}".format(self.name(), Path(self.jobFile).suffix)
         jobFile = str(Path(tmp_jobFile))
+        self.tmp_jobFile = jobFile
         shutil.copyfile(self.jobFile, jobFile)
         return jobFile
 
@@ -113,12 +110,14 @@ class Job:
         tmp_fortranFile = "{}{}".format(self.name(),
                                         Path(self.fortranFile).suffix)
         fortranFile = str(Path(tmp_fortranFile))
+        self.tmp_fortranFile = fortranFile
         shutil.copyfile(self.fortranFile, fortranFile)
         return fortranFile
 
     def reset(self):
         self.executed = False
         self.running = False
+        self.p = None
         self.success = ""
 
     def list_name(self):
