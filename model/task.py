@@ -71,6 +71,7 @@ class Task:
             return None
         self.executeJob(self.nextJob)
         self.nextJob = self.nextJob + 1
+        return self.jobs[self.nextJob-1]
 
     def executeJob(self, index):
         ts = int(time.time())

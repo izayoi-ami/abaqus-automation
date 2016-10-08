@@ -126,14 +126,15 @@ class Root(FloatLayout):
         self.update_list()
         state = self.task.jobs[k].p.poll()
         print("Debug:", state)
-        if state is not None:
+        if state is None:
             return
+        print("Job exited status: {}".format(state))
         if self.task.executeNextJob() is not None:
             job = self.task.jobs[k+1]
             self.set_state("Running job: {}".format(job.formatted_name()))
             return
         self.checker.cancel()
-        self.checker = None
+        self.checker = ObjectProperty(None)
         self.set_msg("Simulation Done.")
         self.btn_execute.disabled = False
 
