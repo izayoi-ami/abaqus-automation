@@ -115,13 +115,14 @@ class Root(FloatLayout):
         self.btn_execute.disabled = True
         self.set_state("Running job: {}".format(self.task.getNextExecuteJob().formatted_name()))
         self.task.executeNextJob()
-        self.checker = Clock.schedule_interval(lambda dt: self.update_queue(), 60)
+        self.checker = Clock.schedule_interval(self.update_queue, 30)
 
-    def update_queue(self):
+    def update_queue(self, *args):
         k = self.task.current_job()
         if k == -1:
             return
-        self.task.update_status()
+        self.task.jobs[k].update_status()
+        # self.task.update_status()
         self.update_list()
         if self.task.jobs[k].p is not None:
             return
@@ -139,8 +140,8 @@ class Root(FloatLayout):
             self.checker.cancel()
 
     def resume_execution(self):
-        if self.chcker is None:
-            self.checker = Clock.schedule_interval(lambda dt: self.update_queue(), 60)
+        if self.checker is None:
+            self.checker = Clock.schedule_interval(self.update_queue, 30)
 
     def set_state(self, state):
         text = "[b]Status[/b]:{}".format(state)
@@ -152,7 +153,7 @@ class Root(FloatLayout):
 
 
 class Simulator(App):
-    pass
+    root = Root()
 
 Factory.register('Root', cls=Root)
 Factory.register('LoadDialog', cls=LoadDialog)
