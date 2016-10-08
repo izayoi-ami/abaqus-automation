@@ -89,7 +89,7 @@ class Job:
 
         try:
             self.state = "Starting ..."
-            self.p = subprocess.popen(cmd)
+            self.p = subprocess.Popen(cmd)
         except subprocess.SubprocessError:
             print("Processing Error")
             self.state = "Process Error"
